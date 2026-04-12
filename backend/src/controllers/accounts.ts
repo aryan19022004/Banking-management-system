@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Account, { AccountStatus } from "../models/Accounts.js";
-import User from "../models/user.js";
+import User, { IUser } from "../models/user.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 function generateAccountNumber() {
@@ -20,11 +20,40 @@ function generateIFSC() {
     return bankCode + '0' + branchCode;
 }
 
-export const createAccount = async (req: Request, res: Response) => {
+interface CreateAccountResponse {
+    message: string;
+    accountNumber?: string;
+    ifsc?: string;
+}
+
+interface GetAccountResponse {
+    message: string;
+    accountHolderName?: string;
+    accountHolderEmail?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    balance?: number;
+    accountType?: string;
+    accountStatus?: string;
+}
+
+interface DeleteAccountResponse {
+    message: string;
+}
+
+interface getBalanceResponse {
+    message?: string;
+    balance?: number;
+    accountType?: string;
+    accountNumber?: string;
+    ifsc?: string;
+}
+
+export const createAccount = async (req: Request, res: Response<CreateAccountResponse>) => {
     try {
         let { balance, type } = req.body;
-
-        if (!balance || 1000 > balance) {
+        balance = Number(balance);
+        if (!balance || 1000 > balance || isNaN(balance)) {
             return res.status(401).json({ message: "Minimum balance 1000 is needed" })
         }
 
@@ -64,14 +93,14 @@ export const createAccount = async (req: Request, res: Response) => {
 
         await newAccount.save();
 
-        return res.status(200).json({ message: "Account created successfully", "account Number": accountNumber, "ifsc": ifsc })
+        return res.status(200).json({ message: "Account created successfully", "accountNumber": accountNumber, "ifsc": ifsc })
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
 
-export const getAccount = async (req: Request, res: Response) => {
+export const getAccount = async (req: Request, res: Response<GetAccountResponse>) => {
     try {
         const userId = req.user?._id;
 
@@ -81,7 +110,7 @@ export const getAccount = async (req: Request, res: Response) => {
         }
         const account = await Account.findOne({
             userId: new mongoose.Types.ObjectId(userId)
-        });
+        }).populate("userId", "name email");
 
 
         if (!account) {
@@ -93,16 +122,23 @@ export const getAccount = async (req: Request, res: Response) => {
             account.closureDate = null;
             await account.save();
         }
-
-        return res.status(200).json({ message: "Account found successfully", account })
+        const userDetails = account.userId as unknown as IUser;
+        return res.status(200).json({
+            message: "Account found successfully",
+            "accountHolderName": userDetails.name,
+            "accountHolderEmail": userDetails.email,
+            "accountNumber": account.accountNumber,
+            "ifsc": account.ifsc,
+            "balance": account.balance,
+            "accountType": account.type,
+            "accountStatus": account.status
+        });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
-
-
-export const deleteAccount = async (req: Request, res: Response) => {
+export const deleteAccount = async (req: Request, res: Response<DeleteAccountResponse>) => {
     try {
         const userId = req.user?._id;
         if (!userId) {
@@ -124,7 +160,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
     }
 }
 
-export const getBalance = async (req: Request, res: Response) => {
+export const getBalance = async (req: Request, res: Response<getBalanceResponse>) => {
     try {
         const userId = req.user?._id;
         if (!userId) {
