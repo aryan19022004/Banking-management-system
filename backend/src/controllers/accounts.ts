@@ -88,7 +88,7 @@ export const getAccount = async (req: Request, res: Response) => {
         await account.save();
     }
 
-    return res.status(200).json(account);
+    return res.status(200).json({ message: "Account found successfully", account })
 }
 
 
@@ -108,3 +108,67 @@ export const deleteAccount = async (req: Request, res: Response) => {
     await account.save();
     return res.status(200).json({ message: "Account deleted successfully" });
 }
+
+export const getBalance = async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    if (!userId) {
+        return res.status(401).json({ message: "User not found" })
+    }
+    const account = await Account.findOne({
+        userId: new mongoose.Types.ObjectId(userId)
+    });
+    if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+    }
+    return res.status(200).json({ balance: account.balance, accountType: account.type, accountNumber: account.accountNumber, ifsc: account.ifsc });
+}
+
+export const requestAtmCard = async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    if (!userId) {
+        return res.status(401).json({ message: "User not found" })
+    }
+    const account = await Account.findOne({
+        userId: new mongoose.Types.ObjectId(userId)
+    });
+    if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+    }
+
+    if (account.atmCardNumber) {
+        return res.status(400).json({ message: "ATM card already exists" });
+    }
+    const atmNumber = generateAccountNumber();
+    const atmPin = Math.floor(1000 + Math.random() * 9000).toString();
+    account.atmCardNumber = atmNumber;
+    account.pin = atmPin;
+    await account.save();
+    return res.status(200).json({ message: "ATM card generated successfully", atmNumber: atmNumber, atmPin: atmPin });
+}
+
+export const getAccountByAtm = async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+
+    const { atmCardNumber, atmPin } = req.body;
+    if (!userId) {
+        return res.status(404).json({ message: "UserId not found" });
+    }
+
+    const account = await Account.findOne({
+        userId: new mongoose.Types.ObjectId(userId)
+    })
+
+    if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+    }
+
+    if (account.atmCardNumber !== atmCardNumber || account.pin !== atmPin) {
+        return res.status(401).json({ message: "Invalid ATM card number or PIN" });
+    }
+
+    return res.status(200).json({ account });
+}
+
+
+
+
