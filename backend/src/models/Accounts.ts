@@ -15,6 +15,7 @@ interface IAccount extends Document {
   status: AccountStatus;
   type: string;
   closureDate?: Date | null;
+  ifsc: string
 }
 
 const accountSchema = new mongoose.Schema<IAccount>({
@@ -26,6 +27,10 @@ const accountSchema = new mongoose.Schema<IAccount>({
   accountNumber: {
     type: String,
 
+  },
+  ifsc: {
+    type: String,
+    required: true
   },
   atmCardNumber: {
     type: String,
