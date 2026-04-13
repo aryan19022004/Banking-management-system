@@ -252,6 +252,35 @@ export const transferMoney = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Receiver account not found" });
         }
 
+        const startOfTheDay = new Date();
+        startOfTheDay.setHours(0, 0, 0, 0);
+
+        const endOfTheDay = new Date();
+        endOfTheDay.setHours(23, 59, 59, 999);
+
+        const totalTransactions = await TransferTransaction.aggregate([
+            {
+                $match: {
+                    senderAccountId: new mongoose.Types.ObjectId(account._id),
+                    timestamp: {
+                        $gte: startOfTheDay,
+                        $lte: endOfTheDay
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: {
+                        $sum: "$amount"
+                    }
+                }
+            }
+        ])
+
+        if (totalTransactions.length > 0 && totalTransactions[0].totalAmount + amountNumber > 100000) {
+            return res.status(400).json({ message: "Daily transfer limit exceeded" });
+        }
 
         const restMoney = account.balance - amountNumber;
         account.balance = restMoney;
