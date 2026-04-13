@@ -212,43 +212,59 @@ export const depositeMoney = async (req: Request, res: Response) => {
 }
 
 export const transferMoney = async (req: Request, res: Response) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const userId = req.user?._id;
         const { senderAccountNumber, receiverAccountNumber, amount, senderifsc, receiverifsc } = req.body;
         if (!userId) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(401).json({ message: "UserId not found" });
         }
 
         const account = await Account.findOne({
             userId: new mongoose.Types.ObjectId(userId)
-        });
+        }).session(session);
         if (!account) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ message: "Account not found" });
         }
 
         if (senderAccountNumber != account.accountNumber || senderifsc != account.ifsc) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(401).json({ message: "Invalid Account number or IFSC" });
         }
 
 
         if (senderAccountNumber === receiverAccountNumber && senderifsc === receiverifsc) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: "Cannot transfer to same account" });
         }
         const amountNumber = Number(amount);
 
         if (isNaN(amountNumber) || amountNumber <= 0) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: "Invalid Amount" });
         }
 
         if (amountNumber > account.balance) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: "Insufficient balance" });
         }
 
         const receiverAccount = await Account.findOne({
             accountNumber: receiverAccountNumber,
             ifsc: receiverifsc
-        });
+        }).session(session);
         if (!receiverAccount) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ message: "Receiver account not found" });
         }
 
@@ -276,20 +292,22 @@ export const transferMoney = async (req: Request, res: Response) => {
                     }
                 }
             }
-        ])
+        ]).session(session);
 
         if (totalTransactions.length > 0 && totalTransactions[0].totalAmount + amountNumber > 100000) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: "Daily transfer limit exceeded" });
         }
 
         const restMoney = account.balance - amountNumber;
         account.balance = restMoney;
-        await account.save();
+        await account.save({ session });
 
 
         const totalBalance = receiverAccount.balance + amountNumber;
         receiverAccount.balance = totalBalance;
-        await receiverAccount.save();
+        await receiverAccount.save({ session });
 
         const senderTransferTransaction = new TransferTransaction({
             senderAccountId: account._id,
@@ -298,9 +316,14 @@ export const transferMoney = async (req: Request, res: Response) => {
             status: "success",
             timestamp: new Date()
         })
-        await senderTransferTransaction.save();
+        await senderTransferTransaction.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
         return res.status(200).json({ message: "Money transferred successfully" });
     } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
         console.log(err);
         return res.status(500).json({ message: "Internal server error" })
     }
