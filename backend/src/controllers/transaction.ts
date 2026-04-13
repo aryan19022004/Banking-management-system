@@ -370,3 +370,58 @@ export const getTransactionHistory = async (req: Request, res: Response) => {
     }
 }
 
+
+export const getDepositeHistory = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "User Not Found" });
+        }
+
+        const account = await Account.findOne({
+            userId: new mongoose.Types.ObjectId(userId)
+        })
+        if (!account) {
+            return res.status(404).json({ message: "Account not Found for this user" });
+        }
+
+        const AtmTransactions = await AtmTransaction.find({
+            accountId: new mongoose.Types.ObjectId(account._id),
+            type: "deposite",
+        }).populate("accountId", "atmCardNumber accountNumber")
+            .sort({ timestamp: -1 });
+
+        return res.status(200).json({ message: "Transaction history fetched successfully", AtmTransactions });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+export const withdrawnHistory = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "User Not Found" });
+        }
+
+        const account = await Account.findOne({
+            userId: new mongoose.Types.ObjectId(userId)
+        })
+        if (!account) {
+            return res.status(404).json({ message: "Account not Found for this user" });
+        }
+
+        const AtmTransactions = await AtmTransaction.find({
+            accountId: new mongoose.Types.ObjectId(account._id),
+            type: "withdraw",
+        }).populate("accountId", "atmCardNumber accountNumber")
+            .sort({ timestamp: -1 });
+
+        return res.status(200).json({ message: "Transaction history fetched successfully", AtmTransactions });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Internal server error" })
+    }
+}
+

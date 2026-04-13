@@ -10,7 +10,7 @@ const app = express();
 
 app.use(cookieParser());
 
-mongoose.connect('mongodb://127.0.0.1:27017/bankingSystem')
+mongoose.connect(process.env.MONGODB_URI as string)
     .then(() => {
         console.log("Connected to MongoDB");
     })
