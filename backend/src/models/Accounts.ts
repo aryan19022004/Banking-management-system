@@ -15,13 +15,19 @@ interface IAccount extends Document {
   status: AccountStatus;
   type: string;
   closureDate?: Date | null;
-  ifsc: string
+  ifsc: string;
+  branchId: mongoose.Types.ObjectId;
 }
 
 const accountSchema = new mongoose.Schema<IAccount>({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  branchId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Branch',
     required: true
   },
   accountNumber: {

@@ -6,6 +6,7 @@ export interface IUser {
     email: string,
     password: string,
     phone: string,
+    userType: mongoose.Types.ObjectId,
 
 }
 
@@ -24,6 +25,11 @@ const userSchema = new mongoose.Schema<IUser>({
     },
     password: {
         type: String,
+        required: true
+    },
+    userType: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "userType",
         required: true
     }
 

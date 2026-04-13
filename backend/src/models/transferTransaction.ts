@@ -6,7 +6,6 @@ interface ITransferTransaction extends Document {
     amount: number,
     status: string,
     timestamp: Date,
-
 }
 
 const transferTransactionSchema = new mongoose.Schema<ITransferTransaction>({

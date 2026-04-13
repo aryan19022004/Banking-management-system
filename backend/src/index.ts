@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import AuthRoutes from './routes/Authentication.js';
 import AccountRoutes from './routes/accounts.js';
 import TransactionRoutes from './routes/transactions.js';
+import userType from './models/userType.js';
 const app = express();
 
 app.use(cookieParser());
