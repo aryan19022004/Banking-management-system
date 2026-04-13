@@ -1,7 +1,7 @@
-import mongoose, { Document, ObjectId } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 interface IAtmTransaction extends Document {
-    accountId: ObjectId,
+    accountId: mongoose.Types.ObjectId,
     amount: number,
     type: string,
     status: string,

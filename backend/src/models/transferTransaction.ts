@@ -1,8 +1,8 @@
-import mongoose, { Document, ObjectId } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 interface ITransferTransaction extends Document {
-    senderAccountId: ObjectId,
-    receiverAccountId: ObjectId,
+    senderAccountId: mongoose.Types.ObjectId,
+    receiverAccountId: mongoose.Types.ObjectId,
     amount: number,
     status: string,
     timestamp: Date,
