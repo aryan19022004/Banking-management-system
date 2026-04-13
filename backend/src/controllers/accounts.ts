@@ -240,6 +240,33 @@ export const getAccountByAtm = async (req: Request, res: Response) => {
 
 }
 
+export const updateAccount = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "User not found" })
+        }
+        const account = await Account.findOne({
+            userId: new mongoose.Types.ObjectId(userId)
+        });
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        const { balance, type } = req.body;
+        if (balance) {
+            account.balance = Number(balance);
+        }
+        if (type) {
+            account.type = type;
+        }
+        await account.save();
+        return res.status(200).json({ message: "Account updated successfully" });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 
 
 
