@@ -3,7 +3,7 @@ import mongoose, { Document } from "mongoose";
 interface IBankEmployee extends Document {
     userId: mongoose.Types.ObjectId,
     branchId: mongoose.Types.ObjectId,
-    userType: mongoose.Types.ObjectId
+    isDeleted: boolean
 
 }
 
@@ -18,6 +18,10 @@ const bankEmployeeSchema = new mongoose.Schema<IBankEmployee>({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Branch",
         required: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
 })
 

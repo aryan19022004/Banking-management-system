@@ -6,6 +6,8 @@ interface ITransferTransaction extends Document {
     amount: number,
     status: string,
     timestamp: Date,
+    senderBranchId: mongoose.Types.ObjectId,
+    receiverBranchId: mongoose.Types.ObjectId,
 }
 
 const transferTransactionSchema = new mongoose.Schema<ITransferTransaction>({
@@ -17,6 +19,17 @@ const transferTransactionSchema = new mongoose.Schema<ITransferTransaction>({
     receiverAccountId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Account',
+        required: true
+    },
+
+    senderBranchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Branch',
+        required: true
+    },
+    receiverBranchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Branch',
         required: true
     },
     amount: {

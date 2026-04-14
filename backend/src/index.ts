@@ -7,6 +7,7 @@ import AuthRoutes from './routes/Authentication.js';
 import AccountRoutes from './routes/accounts.js';
 import TransactionRoutes from './routes/transactions.js';
 import userType from './models/userType.js';
+import BranchRoutes from './routes/branch.js';
 const app = express();
 
 app.use(cookieParser());
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/auth', AuthRoutes);
 app.use('/account', AccountRoutes);
 app.use('/transaction', TransactionRoutes);
+app.use('/branch', BranchRoutes);
 
 
 app.listen(3000, () => {

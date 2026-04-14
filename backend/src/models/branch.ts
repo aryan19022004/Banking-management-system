@@ -1,13 +1,16 @@
 import mongoose, { Document } from "mongoose";
 
-interface IBank extends Document {
+interface IBranch extends Document {
     name: string,
     ifsc: string,
-    branch: string,
     address: string,
+    city: string,
+    state: string,
+    zip: string,
+    isDeleted: boolean
 }
 
-const bankSchema = new mongoose.Schema<IBank>({
+const branchSchema = new mongoose.Schema<IBranch>({
     name: {
         type: String,
         required: true
@@ -16,14 +19,26 @@ const bankSchema = new mongoose.Schema<IBank>({
         type: String,
         required: true
     },
-    branch: {
-        type: String,
-        required: true
-    },
     address: {
         type: String,
         required: true
+    },
+    city: {
+        type: String,
+        required: true
+    },
+    state: {
+        type: String,
+        required: true
+    },
+    zip: {
+        type: String,
+        required: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
 })
 
-export default mongoose.model<IBank>("Bank", bankSchema);
+export default mongoose.model<IBranch>("Branch", branchSchema);

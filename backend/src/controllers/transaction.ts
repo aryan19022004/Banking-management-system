@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import AtmTransaction from "../models/AtmTransaction.js";
 import TransferTransaction from "../models/transferTransaction.js";
 import bcrypt from "bcrypt";
+import branch from "../models/branch.js";
 
 
 export const withdrawMoneyATM = async (req: Request, res: Response) => {
@@ -109,7 +110,7 @@ export const withdrawMoneyByAccountNumber = async (req: Request, res: Response) 
             return res.status(400).json({ message: "Invalid Amount" });
         }
 
-        if (amount > account.balance) {
+        if (amountNumber > account.balance) {
             return res.status(400).json({ message: "Insufficient balance" });
         }
 
@@ -232,7 +233,14 @@ export const transferMoney = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Account not found" });
         }
 
-        if (senderAccountNumber != account.accountNumber || senderifsc != account.ifsc) {
+        const senderBranch = await branch.findById(account.branchId).session(session);
+        if (!senderBranch) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Branch not found" });
+        }
+
+        if (senderAccountNumber != account.accountNumber || senderifsc != senderBranch.ifsc) {
             await session.abortTransaction();
             session.endSession();
             return res.status(401).json({ message: "Invalid Account number or IFSC" });
@@ -266,6 +274,19 @@ export const transferMoney = async (req: Request, res: Response) => {
             await session.abortTransaction();
             session.endSession();
             return res.status(404).json({ message: "Receiver account not found" });
+        }
+
+        const receiverBranch = await branch.findById(receiverAccount.branchId).session(session);
+        if (!receiverBranch) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: "Receiver branch not found" });
+        }
+
+        if (receiverAccountNumber != receiverAccount.accountNumber || receiverifsc != receiverBranch.ifsc) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(401).json({ message: "Invalid Account number or IFSC to send" });
         }
 
         const startOfTheDay = new Date();
@@ -313,6 +334,8 @@ export const transferMoney = async (req: Request, res: Response) => {
             senderAccountId: account._id,
             receiverAccountId: receiverAccount._id,
             amount: amountNumber,
+            receiverBranchId: receiverBranch._id,
+            senderBranchId: senderBranch._id,
             status: "success",
             timestamp: new Date()
         })

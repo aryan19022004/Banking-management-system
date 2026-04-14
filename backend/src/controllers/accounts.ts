@@ -3,22 +3,12 @@ import Account, { AccountStatus } from "../models/Accounts.js";
 import User, { IUser } from "../models/user.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import branch from "../models/branch.js";
 function generateAccountNumber() {
     return Math.floor(100000000000 + Math.random() * 900000000000).toString();
 }
 
-function generateIFSC() {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    let bankCode = '';
-    for (let i = 0; i < 4; i++) {
-        bankCode += letters[Math.floor(Math.random() * letters.length)];
-    }
-
-    let branchCode = Math.floor(100000 + Math.random() * 900000);
-
-    return bankCode + '0' + branchCode;
-}
 
 interface CreateAccountResponse {
     message: string;
@@ -51,7 +41,15 @@ interface getBalanceResponse {
 
 export const createAccount = async (req: Request, res: Response<CreateAccountResponse>) => {
     try {
-        let { balance, type } = req.body;
+        let { balance, type, branchId } = req.body;
+
+        if (!branchId) {
+            return res.status(400).json({ message: "Branch ID is required" });
+        }
+        const branchs = await branch.findById(branchId);
+        if (!branchs) {
+            return res.status(404).json({ message: "Branch not found" });
+        }
         balance = Number(balance);
         if (!balance || 1000 > balance || isNaN(balance)) {
             return res.status(401).json({ message: "Minimum balance 1000 is needed" })
@@ -79,7 +77,7 @@ export const createAccount = async (req: Request, res: Response<CreateAccountRes
         }
 
         const accountNumber = generateAccountNumber();
-        const ifsc = generateIFSC();
+
 
 
 
@@ -88,12 +86,13 @@ export const createAccount = async (req: Request, res: Response<CreateAccountRes
             balance,
             type,
             accountNumber,
-            ifsc
+            ifsc: branchs.ifsc,
+            branchId: branchs._id
         })
 
         await newAccount.save();
 
-        return res.status(200).json({ message: "Account created successfully", "accountNumber": accountNumber, "ifsc": ifsc })
+        return res.status(200).json({ message: "Account created successfully", "accountNumber": accountNumber, "ifsc": branchs.ifsc })
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "Internal server error" });
