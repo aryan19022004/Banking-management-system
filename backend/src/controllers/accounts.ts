@@ -109,7 +109,7 @@ export const getAccount = async (req: Request, res: Response<GetAccountResponse>
         }
         const account = await Account.findOne({
             userId: new mongoose.Types.ObjectId(userId)
-        }).populate("userId", "name email");
+        }).populate("userId", "name email").populate("branchId", "name ifsc");
 
 
         if (!account) {
@@ -265,6 +265,45 @@ export const updateAccount = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export const getBalanceByAtm = async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    if (!userId) {
+        return res.status(400).json({ message: "User Not found" });
+    }
+
+    const { AtmCardNumber, pin } = req.body
+
+    if (!AtmCardNumber || !pin) {
+        return res.status(401).json({ message: "ATM Card Number or PIN is missing" });
+    }
+
+    const ATMcardRegex = /^\d{12}$/;
+    if (!ATMcardRegex.test(AtmCardNumber)) {
+        return res.status(400).json({ message: "Invalid AtmCardNumber format" });
+    }
+
+    const PinRegex = /^\d{4}$/;
+    if (!PinRegex.test(pin)) {
+        return res.status(400).json({ message: "Invalid Pin" });
+    }
+
+    const accounts = await Account.findOne({
+        atmCardNumber: AtmCardNumber
+    });
+
+    if (!accounts) {
+        return res.status(404).json({ message: "Account not found" });
+    }
+
+    if (! await (bcrypt.compare(pin, accounts.pin))) {
+        return res.status(401).json({ message: "Invalid PIN" });
+    }
+
+    return res.status(200).json({ balance: accounts.balance, accountType: accounts.type, accountNumber: accounts.accountNumber, ifsc: accounts.ifsc });
+}
+
+
 
 
 

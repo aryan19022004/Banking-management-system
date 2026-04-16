@@ -17,6 +17,7 @@ interface IAccount extends Document {
   closureDate?: Date | null;
   ifsc: string;
   branchId: mongoose.Types.ObjectId;
+  isDeleted: boolean;
 }
 
 const accountSchema = new mongoose.Schema<IAccount>({
@@ -63,6 +64,11 @@ const accountSchema = new mongoose.Schema<IAccount>({
   },
   closureDate: {
     type: Date
+  },
+
+  isDeleted: {
+    type: Boolean,
+    default: false
   }
 });
 
