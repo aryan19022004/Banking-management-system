@@ -15,6 +15,10 @@ export const withdrawMoneyATM = async (atmCardNumber: string, AtmPin: string, am
             })
         })
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Withdraw Money")
+        }
         return data;
     }
     catch (err) {
@@ -38,6 +42,10 @@ export const withdrawMoneyByAccountNumber = async (accountNumber: string, amount
             })
         })
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Withdraw Money")
+        }
         return data;
     }
     catch (err) {
@@ -62,6 +70,10 @@ export const depositeMoney = async (accountNumber: string, amount: string, ifsc:
             })
         })
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Deposite Money")
+        }
         return data;
     }
     catch (err) {
@@ -80,7 +92,11 @@ export const transactionHistory = async () => {
             },
             credentials: 'include',
         });
-        const data = response.json();
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Fetch Transaction History")
+        }
         return data;
     }
     catch (err) {
@@ -99,7 +115,11 @@ export const depositeHistory = async () => {
             },
             credentials: 'include',
         });
-        const data = response.json();
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Fetch Deposite History")
+        }
         return data;
     }
     catch (err) {
@@ -117,7 +137,11 @@ export const withdrawnHistory = async () => {
             },
             credentials: 'include',
         });
-        const data = respone.json();
+        const data = await respone.json();
+
+        if (!respone.ok) {
+            throw new Error(data.message || "Failed to Fetch Withdrawn History")
+        }
         return data;
     }
     catch (err) {
@@ -143,6 +167,10 @@ export const transferMoney = async (senderAccountNumber: string, receiverAccount
             })
         })
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to Transfer Money")
+        }
         return data;
     }
     catch (err) {
